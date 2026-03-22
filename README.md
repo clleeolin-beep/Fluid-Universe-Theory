@@ -94,7 +94,7 @@ cd Vortex-Galaxy-Cosmology
 pip install numpy scipy plotly PyQt6 PyQt6-WebEngine
 
 # 3. 啟動川流物理觀測鏡
-python Univer.py
+python HTFC_Engine.py
 ````
 
 *(啟動後，可使用左側控制面板動態切換 16 個宇宙尺度，並即時調整介質透明度與色彩參數。)*
