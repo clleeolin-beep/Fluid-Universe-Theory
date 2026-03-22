@@ -1,6 +1,6 @@
-# 🌌 全像拓撲流體宇宙學 (Holographic Topological Fluid Cosmology)
+# 🌌 流體宇宙學 (Fluid-Universe-Theory)
 
-> **「宇宙不是空無一物的幾何彎曲，而是一場跨越 16 個數量級的立體川流。」**
+> **「宇宙不是空無一物的幾何彎曲，而是一團跨越量級的立體川流。」**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
