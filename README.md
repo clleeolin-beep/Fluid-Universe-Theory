@@ -87,8 +87,8 @@
 
 ```bash
 # 1. 複製本專案
-git clone [https://github.com/您的帳號/Vortex-Galaxy-Cosmology.git](https://github.com/您的帳號/Vortex-Galaxy-Cosmology.git)
-cd Vortex-Galaxy-Cosmology
+git clone [https://github.com/clleeolin-beep/Holographic Topological Fluid Cosmology.git](https://github.com/clleeolin-beep/Holographic Topological Fluid Cosmology.git)
+cd Holographic Topological Fluid Cosmology
 
 # 2. 安裝必要的科學運算與 UI 套件
 pip install numpy scipy plotly PyQt6 PyQt6-WebEngine
