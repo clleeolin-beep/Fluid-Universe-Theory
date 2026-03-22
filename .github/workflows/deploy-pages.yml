@@ -1,100 +1,103 @@
 name: Deploy HTFC to GitHub Pages
 
 on:
-  # 當代碼推送到 main 分支時，觸發自動發佈
   push:
     branches: ["main"]
-  # 允許手動在 Actions 面板點擊執行
   workflow_dispatch:
 
-# 設定 GitHub Token 權限，允許寫入 Pages 伺服器
+# 提前啟用 Node.js 24 以解決棄用警告
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# 併發控制：確保不會有兩個發佈任務同時覆蓋彼此
 concurrency:
   group: "pages"
   cancel-in-progress: true
 
 jobs:
-  # 階段一：構建靜態網頁與 3D 渲染 (Build)
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: 檢出儲存庫代碼 (Checkout repository)
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: 建立 Python 3.10 環境 (Set up Python)
-        uses: actions/setup-python@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5 # 升級至 v5 版本
         with:
           python-version: '3.10'
 
-      - name: 安裝科學運算與渲染依賴 (Install dependencies)
+      - name: Install All Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install numpy scipy plotly PyQt6 PyQt6-WebEngine
+          # 確保所有物理運算套件完整安裝
+          pip install numpy scipy plotly PyQt6 PyQt6-WebEngine 
 
-      - name: 執行 HTFC 引擎，動態生成 3D 流場 HTML (Generate 3D HTML levels)
+      - name: Generate 3D HTML levels
         run: |
-          # 建立對外公開的靜態資料夾
           mkdir -p public/levels
           
-          # 寫入暫存的 Python 渲染腳本
           cat << 'EOF' > build_web.py
           import os
-          from HTFC_Engine import HolographicFluidCosmologyEngine
+          import sys
+          # 確保 Python 能正確讀取當前目錄下的 HTFC_Engine
+          sys.path.append(os.getcwd()) 
+          try:
+              from HTFC_Engine import HolographicFluidCosmologyEngine
+              
+              engine = HolographicFluidCosmologyEngine()
+              os.makedirs("public/levels", exist_ok=True)
 
-          engine = HolographicFluidCosmologyEngine()
-          os.makedirs("public/levels", exist_ok=True)
-
-          # 匯出論文最核心的第 16 階 (CMB) 與第 17 階 (全尺度橋接)
-          for i in [15, 16]:
-              html_data = engine.get_render_html(i)
-              with open(f"public/levels/level_{i+1}.html", "w", encoding="utf-8") as f:
-                  f.write(html_data)
+              # 匯出論文核心階層 16 (CMB) 與 17 (無縫橋接)
+              for i in [15, 16]:
+                  html_data = engine.get_render_html(i)
+                  with open(f"public/levels/level_{i+1}.html", "w", encoding="utf-8") as f:
+                      f.write(html_data)
+              print("3D 渲染成功完成")
+          except Exception as e:
+              print(f"渲染發生關鍵錯誤: {e}")
+              sys.exit(1) # 若出錯則回傳 1 以中斷 Workflow
           EOF
           
-          # 強制 PyQt6 在無實體螢幕的伺服器上進行背景渲染
+          # 解決雲端伺服器缺乏顯示器導致的 PyQt6 崩潰問題
           export QT_QPA_PLATFORM=offscreen
           python build_web.py
 
-      - name: 動態生成實驗室導覽首頁 (Generate index.html)
+      - name: Generate index.html
         run: |
           cat << 'EOF' > public/index.html
           <!DOCTYPE html>
-          <html lang="zh-TW">
+          <html>
           <head>
               <meta charset="UTF-8">
               <title>HTFC 宇宙流體觀測站 - Chung-Lin Lee</title>
               <style>
                   body { background-color: #02040A; color: #00FFFF; font-family: sans-serif; text-align: center; padding: 50px; }
-                  .menu { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; max-width: 1000px; margin: 0 auto; }
-                  a { border: 1px solid #00FFFF; padding: 15px; color: #00FFFF; text-decoration: none; border-radius: 5px; transition: 0.3s; }
+                  .menu { display: flex; flex-direction: column; gap: 20px; align-items: center; margin-top: 30px; }
+                  a { border: 1px solid #00FFFF; padding: 15px; color: #00FFFF; text-decoration: none; width: 300px; border-radius: 5px; transition: 0.3s; }
                   a:hover { background-color: #0066CC; color: white; }
-                  h1 { margin-bottom: 10px; }
-                  p { color: #888; margin-bottom: 40px; }
               </style>
           </head>
           <body>
               <h1>全像拓撲流體宇宙學 (HTFC)</h1>
-              <p>互動式 3D 流體模型在線觀測站 | 作者：Chung-Lin Lee (獨立研究者)</p>
+              <p>互動式 3D 流體模型在線觀測站 | 作者：Chung-Lin Lee (李宗霖)</p>
               <div class="menu">
-                  <a href="levels/level_16.html">第 16 階：CMB 全像薄膜網路</a>
-                  <a href="levels/level_17.html">第 17 階：全尺度無縫橋接實證</a>
-                  <a href="https://github.com/${{ github.repository }}/blob/main/Holographic_Topological_Fluid_Cosmology_Paper.md" target="_blank">閱讀完整論文 (Markdown)</a>
+                  <a href="levels/level_16.html">第 16 階：CMB 全像網絡</a>
+                  <a href="levels/level_17.html">第 17 階：全尺度無縫橋接</a>
+                  <a href="https://github.com/${{ github.repository }}/blob/main/Holographic_Topological_Fluid_Cosmology_Paper.md" target="_blank">閱讀論文原文</a>
               </div>
           </body>
           </html>
           EOF
 
-      - name: 打包靜態資源 (Upload artifact)
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: './public'
 
-  # 階段二：發佈至 GitHub Pages 伺服器 (Deploy)
   deploy:
     environment:
       name: github-pages
@@ -102,6 +105,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: 執行部署 (Deploy to GitHub Pages)
+      - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
